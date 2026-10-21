@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Front-of-Pack (FoP) Rating &amp; Claim Validator — Asif SaaS Studio</title>
+<style>
+  :root{--emerald:#103E32;--emerald2:#0B3D2E;--lime:#DCF5B5;--paper:#F7F8F2;--gold:#C9A227;--ink:#1d2b26;--mut:#5a6b63;--line:#d8e2d5;--pass:#1e7d46;--fail:#b3362b;--warn:#9a6a00;--chipA:#038141;--chipB:#85bb2f;--chipC:#fecb02;--chipD:#ee8100;--chipE:#e63e11}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Georgia,'Times New Roman',serif;background:var(--paper);color:var(--ink)}
+  header{background:linear-gradient(135deg,var(--emerald2),var(--emerald));color:#fff;padding:22px 18px 18px;text-align:center}
+  header .brand{color:var(--gold);letter-spacing:3px;font-size:12px;text-transform:uppercase}
+  header h1{margin:6px 0 4px;font-size:26px;font-weight:normal}
+  header p{margin:0;color:var(--lime);font-size:14px}
+  .wrap{max-width:1180px;margin:0 auto;padding:16px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(16,62,50,.06)}
+  .card h2{margin:0 0 10px;font-size:18px;color:var(--emerald);border-bottom:2px solid var(--lime);padding-bottom:6px}
+  .card h3{margin:14px 0 6px;font-size:15px;color:var(--emerald)}
+  label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
+  input[type=text],input[type=number],select,textarea{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;background:#fff}
+  textarea{min-height:90px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  @media(max-width:560px){.row2,.row3{grid-template-columns:1fr}}
+  .chk{display:flex;align-items:center;gap:8px;margin:9px 0;font-size:14px;color:var(--ink)}
+  .chk input{width:17px;height:17px;accent-color:var(--emerald)}
+  .hint{font-size:12px;color:var(--mut);margin-top:2px}
+  .err{display:none;background:#fdecea;border:1px solid #f0b8b2;color:var(--fail);border-radius:6px;padding:8px 10px;font-size:13px;margin-top:10px}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:1;padding:8px;border:1px solid var(--emerald);background:#fff;color:var(--emerald);border-radius:6px;cursor:pointer;font:inherit;font-size:14px}
+  .seg button.on{background:var(--emerald);color:#fff}
+  .btn{display:inline-block;padding:9px 14px;border:1px solid var(--emerald);background:var(--emerald);color:#fff;border-radius:6px;cursor:pointer;font:inherit;font-size:14px;margin:4px 4px 0 0}
+  .btn.ghost{background:#fff;color:var(--emerald)}
+  .ratings{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:560px){.ratings{grid-template-columns:1fr}}
+  .ratebox{border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;background:var(--paper)}
+  .nsrow{display:flex;gap:3px;justify-content:center;margin:8px 0}
+  .nschip{width:38px;height:38px;border-radius:7px;color:#fff;font-weight:bold;font-size:19px;display:flex;align-items:center;justify-content:center;opacity:.28}
+  .nschip.sel{opacity:1;outline:3px solid var(--ink);transform:scale(1.08)}
+  .stars{font-size:26px;color:var(--gold);letter-spacing:2px;min-height:34px}
+  .score{font-size:13px;color:var(--mut)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:6px 0}
+  th,td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}
+  th{color:var(--emerald);font-weight:bold}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;padding:1px 8px;border-radius:9px;font-size:12px;color:#fff}
+  .pill.p{background:var(--pass)}.pill.f{background:var(--fail)}.pill.n{background:#8a978f}
+  .claim{border-bottom:1px solid var(--line);padding:6px 0;font-size:14px}
+  .claim .why{color:var(--mut);font-size:12.5px}
+  .flag{background:#fff7e0;border:1px solid #ecd28a;border-radius:6px;padding:8px 10px;font-size:13.5px;margin:6px 0;color:#6b5200}
+  details{margin-top:8px}summary{cursor:pointer;color:var(--emerald);font-size:14px}
+  .batchres{cursor:pointer}.batchres:hover{background:var(--lime)}
+  .note{font-size:12.5px;color:var(--mut);line-height:1.5}
+  footer{text-align:center;color:var(--mut);font-size:12.5px;padding:14px}
+  .kbd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#eef3ea;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Asif SaaS Studio</div>
+  <h1>Front-of-Pack (FoP) Rating &amp; Claim Validator</h1>
+  <p>Codex claim screening &bull; Nutri-Score 2023 prediction &bull; Health Star Rating &bull; By Dr. Asif Ahmad</p>
+</header>
+<div class="wrap">
+<div class="grid">
+<div>
+  <div class="card">
+    <h2>1 &middot; Product &amp; settings</h2>
+    <label for="pName">Product name</label>
+    <input type="text" id="pName" value="Wholegrain muesli bar">
+    <div class="row2">
+      <div><label>Form (basis of the nutrient values)</label>
+        <div class="seg" id="pFormSeg">
+          <button type="button" data-form="solid" class="on">Solid food — per 100 g</button>
+          <button type="button" data-form="beverage">Beverage — per 100 ml</button>
+        </div></div>
+      <div><label for="pServing">Serving size (g or ml, optional — shown in the summary)</label>
+        <input type="number" id="pServing" min="0" step="any" placeholder="e.g. 40"></div>
+    </div>
+    <div class="row2">
+      <div><label for="pJurisdiction">Claim rules jurisdiction (protein claims)</label>
+        <select id="pJurisdiction"><option value="codex" selected>Codex (CAC/GL 23-1997)</option><option value="eu">EU — Reg. (EC) 1924/2006 protein variation</option></select></div>
+      <div><label for="pHsrCat">Health Star Rating category</label>
+        <select id="pHsrCat">
+          <option value="1">1 — Non-dairy beverages</option>
+          <option value="1D">1D — Dairy beverages</option>
+          <option value="2" selected>2 — General foods (non-dairy)</option>
+          <option value="2D">2D — Dairy foods</option>
+          <option value="3">3 — Oils &amp; spreads</option>
+          <option value="3D">3D — Cheese &gt;320 mg Ca/100 g</option>
+        </select>
+        <div class="hint">All six official HSR categories are implemented. Match the category to the product — the same score earns different stars in different categories.</div></div>
+    </div>
+    <div class="row2">
+      <div><label for="pFvn">Fruit, vegetables, nuts &amp; legumes (FVNL) %</label>
+        <input type="number" id="pFvn" min="0" max="100" step="any" value="35">
+        <div class="hint">Used by Nutri-Score and HSR (V points). 0–100.</div></div>
+      <div><label>&nbsp;</label>
+        <div class="chk"><input type="checkbox" id="pFvnConc"><span>FVNL is concentrated (dried fruit / paste) — HSR V points, column 1</span></div>
+        <div class="chk"><input type="checkbox" id="pRedMeat"><span>Red-meat product — Nutri-Score 2023 protein points capped at 2</span></div></div>
+    </div>
+    <div class="chk"><input type="checkbox" id="pAddedSugars"><span>Contains <b>added sugars</b> (blocks the “No added sugars” claim)</span></div>
+    <div class="chk"><input type="checkbox" id="pSweeteners"><span>Contains non-nutritive sweeteners (Nutri-Score beverages: +4 N points)</span></div>
+    <div class="chk"><input type="checkbox" id="pWater"><span>This beverage is plain water (Nutri-Score class A by rule)</span></div>
+  </div>
+
+  <div class="card">
+    <h2>2 &middot; Nutrient profile <span style="font-size:13px;color:var(--mut)">(per 100 g or 100 ml, as above)</span></h2>
+    <div class="row2">
+      <div><label for="nKcal">Energy (kcal)</label><input type="number" id="nKcal" min="0" step="any" value="410"></div>
+      <div><label for="nKj">Energy (kJ) — linked, 1 kcal = 4.184 kJ</label><input type="number" id="nKj" min="0" step="any" value="1715"></div>
+    </div>
+    <div class="row3">
+      <div><label for="nProtein">Protein (g)</label><input type="number" id="nProtein" min="0" max="100" step="any" value="8.5"></div>
+      <div><label for="nFibre">Dietary fibre (g)</label><input type="number" id="nFibre" min="0" max="100" step="any" value="6.2"></div>
+      <div><label for="nSugars">Total sugars (g)</label><input type="number" id="nSugars" min="0" max="100" step="any" value="18"></div>
+    </div>
+    <div class="row3">
+      <div><label for="nFat">Total fat (g)</label><input type="number" id="nFat" min="0" max="100" step="any" value="14"></div>
+      <div><label for="nSatfat">Saturated fat (g)</label><input type="number" id="nSatfat" min="0" max="100" step="any" value="2.2"></div>
+      <div><label for="nVitC">Vitamin C (mg)</label><input type="number" id="nVitC" min="0" step="any" value="0"></div>
+    </div>
+    <div class="row2">
+      <div><label for="nSodium">Sodium (mg)</label><input type="number" id="nSodium" min="0" step="any" value="120"></div>
+      <div><label for="nSalt">Salt (g) — linked, sodium mg = salt g &times; 400</label><input type="number" id="nSalt" min="0" step="any" value="0.3"></div>
+    </div>
+    <div class="row3">
+      <div><label for="nCalcium">Calcium (mg)</label><input type="number" id="nCalcium" min="0" step="any" value="60"></div>
+      <div><label for="nIron">Iron (mg)</label><input type="number" id="nIron" min="0" step="any" value="2.4"></div>
+      <div><label for="nVitD">Vitamin D (&micro;g)</label><input type="number" id="nVitD" min="0" step="any" value="0"></div>
+    </div>
+    <div class="err" id="formErr"></div>
+    <p class="note">Blank fields count as 0. Saturated fat should not exceed total fat; the app warns but still evaluates.</p>
+  </div>
+
+  <div class="card">
+    <h2>3 &middot; Batch screening (optional)</h2>
+    <p class="note">Paste CSV or upload a file with columns:
+    <span class="kbd">name,form,energy_kcal,protein,fibre,sugars,fat,satfat,sodium_mg,fvn_pct,calcium,iron,vitc,vitd</span>
+    (form = <span class="kbd">solid</span> or <span class="kbd">beverage</span>; extra columns are ignored; a header row is optional). Click a result row to load that product into the form above.</p>
+    <textarea id="batchText" placeholder="name,form,energy_kcal,protein,fibre,sugars,fat,satfat,sodium_mg,fvn_pct,calcium,iron,vitc,vitd&#10;Oat bar,solid,410,8.5,6.2,18,14,2.2,120,35,60,2.4,0,0"></textarea>
+    <div>
+      <button class="btn" id="batchRun" type="button">Screen batch</button>
+      <button class="btn ghost" id="batchClear" type="button">Clear</button>
+      <label style="display:inline-block;margin-left:6px">or upload .csv/.txt <input type="file" id="batchFile" accept=".csv,.txt,text/csv,text/plain" style="width:auto"></label>
+    </div>
+    <div class="err" id="batchErr"></div>
+    <div id="batchOut"></div>
+  </div>
+</div>
+
+<div>
+  <div class="card">
+    <h2>Predicted front-of-pack ratings</h2>
+    <div class="ratings">
+      <div class="ratebox">
+        <div style="font-size:13px;color:var(--mut)">NUTRI-SCORE (2023 algorithm)</div>
+        <div class="nsrow" id="nsRow"></div>
+        <div class="score" id="nsScore">—</div>
+        <details><summary>Points breakdown</summary><div id="nsBreak"></div></details>
+      </div>
+      <div class="ratebox">
+        <div style="font-size:13px;color:var(--mut)">HEALTH STAR RATING (AU/NZ)</div>
+        <div class="stars" id="hsrStars">—</div>
+        <div class="score" id="hsrScore">—</div>
+        <details><summary>Points breakdown</summary><div id="hsrBreak"></div></details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Claim validation <span style="font-size:13px;color:var(--mut)" id="claimBasis"></span></h2>
+    <div id="cautions"></div>
+    <h3 style="color:var(--pass)">&#10003; Claims this product can make (<span id="passCount">0</span>)</h3>
+    <div id="claimsPass"></div>
+    <h3 style="color:var(--fail)">&#10007; Claims not met (<span id="failCount">0</span>)</h3>
+    <div id="claimsFail"></div>
+  </div>
+
+  <div class="card">
+    <h2>Outputs</h2>
+    <button class="btn" id="copyBtn" type="button">Copy summary</button>
+    <button class="btn ghost" id="csvBtn" type="button">Download evaluation CSV</button>
+    <span class="note" id="copyMsg"></span>
+    <h3>Honest scope — read before using results commercially</h3>
+    <p class="note">Claim conditions follow <b>Codex CAC/GL 23-1997</b> (NRVs: Ca 800 mg, Fe 14 mg, vitamin C 100 mg, vitamin D 5 &micro;g), with the EU protein variation from Regulation (EC) No 1924/2006. Nutri-Score uses the <b>2023 updated algorithm</b> (Sant&eacute; publique France, Q&amp;A v. 10 July 2023; Scientific Committee reports 2022 &amp; Jan 2023) — general foods and beverages only; the special cheese and added-fats/nuts categories are <b>not</b> implemented. Health Star Rating uses the tables in the <i>Guide for industry to the Health Star Rating Calculator</i> (baseline/modifying/final-score tables as summarised from the official guide); all six categories are implemented. National implementations vary, some claims need additional conditions (e.g. trans-fat limits for saturated-fat-free in some markets), and plain water&rsquo;s automatic ratings are handled by the checkbox. This tool screens a nutrient profile — it does not calculate a profile from a recipe, and final claim legality always needs regulatory review.</p>
+  </div>
+</div>
+</div>
+</div>
+<footer>Front-of-Pack (FoP) Rating &amp; Claim Validator v1.0 &middot; Asif SaaS Studio &middot; By Dr. Asif Ahmad &middot; Runs entirely in your browser — no data leaves this page.</footer>
+<script>
+/*PURE-CORE-START*/
+'use strict';
+/* ============ FoP Validator — PURE CORE (no DOM) ============
+   Sources:
+   - Claims: Codex CAC/GL 23-1997 (Guidelines for Use of Nutrition and Health Claims);
+     EU protein variation: Regulation (EC) No 1924/2006, Annex.
+   - Nutri-Score: 2023 updated algorithm — Santé publique France, "Nutri-Score
+     Questions & Answers" v. 10 July 2023 (Tables 5, 6, 9, 10); Scientific Committee
+     update reports 2022 (main algorithm, §1.4 thresholds) and Jan 2023 (beverages, §6.7.3).
+   - Health Star Rating: "Guide for industry to the Health Star Rating Calculator"
+     tables (baseline Tables 1-2, FVNL Table 3, protein/fibre Table 4, final-score
+     Table 5) as summarised in the official summarised scoring tables (2015 update).
+   ============================================================ */
+var KJ_PER_KCAL = 4.184;
+var NRV = { protein: 50, calcium: 800, iron: 14, vitC: 100, vitD: 5 };
+
+function ptsAbove(value, thresholds){ var n=0; for (var i=0;i<thresholds.length;i++){ if (value > thresholds[i] + 1e-9) n++; } return n; }
+function saltGFromSodiumMg(mg){ return mg/400; }
+function sodiumMgFromSaltG(g){ return g*400; }
+function fmt(x, d){ var n = Math.round(x*Math.pow(10,d))/Math.pow(10,d); return (''+n); }
+
+/* ---------- Nutri-Score 2023 tables ---------- */
+var NS = {
+  foodEnergy: [335,670,1005,1340,1675,2010,2345,2680,3015,3350],
+  foodSugars: [3.4,6.8,10,14,17,20,24,27,31,34,37,41,44,48,51],
+  satFat:     [1,2,3,4,5,6,7,8,9,10],
+  salt:       [0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6,3.8,4.0],
+  foodProtein:[2.4,4.8,7.2,9.6,12,14,17],
+  fibre:      [3.0,4.1,5.2,6.3,7.4],
+  bevEnergy:  [30,90,150,210,240,270,300,330,360,390],
+  bevSugars:  [0.5,2,3.5,5,6,7,8,9,10,11],
+  bevProtein: [1.2,1.5,1.8,2.1,2.4,2.7,3.0]
+};
+function nsFvlFood(pct){ return pct>80?5:(pct>60?2:(pct>40?1:0)); }
+function nsFvlBev(pct){ return pct>80?6:(pct>60?4:(pct>40?2:0)); }
+
+function nutriScore(p){
+  var saltG = saltGFromSodiumMg(p.sodiumMg||0);
+  var rows = [], N = 0, P = 0, proteinCounted = true, rule = '';
+  if (p.form === 'beverage'){
+    var eE = ptsAbove(p.energyKj, NS.bevEnergy), eS = ptsAbove(p.sugars, NS.bevSugars),
+        eF = ptsAbove(p.satfat, NS.satFat), eNa = ptsAbove(saltG, NS.salt),
+        eSw = p.sweeteners ? 4 : 0;
+    N = eE+eS+eF+eNa+eSw;
+    var bPr = ptsAbove(p.protein, NS.bevProtein), bFi = ptsAbove(p.fibre, NS.fibre), bFv = nsFvlBev(p.fvn||0);
+    P = bPr+bFi+bFv;
+    rows = [
+      ['Energy', fmt(p.energyKj,0)+' kJ/100 ml', eE], ['Sugars', fmt(p.sugars,2)+' g/100 ml', eS],
+      ['Saturated fat', fmt(p.satfat,2)+' g/100 ml', eF], ['Salt', fmt(saltG,2)+' g/100 ml', eNa],
+      ['Non-nutritive sweeteners', p.sweeteners?'present':'absent', eSw],
+      ['Protein', fmt(p.protein,2)+' g/100 ml', bPr], ['Fibre', fmt(p.fibre,2)+' g/100 ml', bFi],
+      ['Fruit/veg/legumes', fmt(p.fvn||0,0)+' %', bFv]
+    ];
+    var bScore = N - P, bGrade;
+    if (p.water) bGrade = 'A';
+    else bGrade = bScore<=2?'B':(bScore<=6?'C':(bScore<=9?'D':'E'));
+    rule = p.water ? 'Plain water is class A by rule (2023 beverages report).' :
+      'Beverages: final score = N − P (no protein-exclusion rule; protein cap removed in the 2023 beverage update). Bands: B ≤2, C 3–6, D 7–9, E ≥10; only water is A.';
+    return { N:N, P:P, proteinPts:bPr, fibrePts:bFi, fvlPts:bFv, proteinCounted:true, score:bScore, grade:bGrade, rows:rows, rule:rule };
+  }
+  var fE = ptsAbove(p.energyKj, NS.foodEnergy), fS = ptsAbove(p.sugars, NS.foodSugars),
+      fF = ptsAbove(p.satfat, NS.satFat), fNa = ptsAbove(saltG, NS.salt);
+  N = fE+fS+fF+fNa;
+  var rawPr = ptsAbove(p.protein, NS.foodProtein);
+  var fPr = p.redMeat ? Math.min(rawPr, 2) : rawPr;
+  var fFi = ptsAbove(p.fibre, NS.fibre), fFv = nsFvlFood(p.fvn||0);
+  var score;
+  if (N >= 11){ proteinCounted = false; score = N - fFi - fFv; P = fFi + fFv; }
+  else { score = N - (fPr+fFi+fFv); P = fPr+fFi+fFv; }
+  var grade = score<=0?'A':(score<=2?'B':(score<=10?'C':(score<=18?'D':'E')));
+  rows = [
+    ['Energy', fmt(p.energyKj,0)+' kJ/100 g', fE], ['Sugars', fmt(p.sugars,2)+' g/100 g', fS],
+    ['Saturated fat', fmt(p.satfat,2)+' g/100 g', fF], ['Salt', fmt(saltG,2)+' g/100 g', fNa],
+    ['Protein'+(p.redMeat?' (red-meat cap 2)':''), fmt(p.protein,2)+' g/100 g', fPr],
+    ['Fibre', fmt(p.fibre,2)+' g/100 g', fFi], ['Fruit/veg/legumes', fmt(p.fvn||0,0)+' %', fFv]
+  ];
+  rule = N>=11 ? 'N ≥ 11: under the 2023 algorithm protein points are NOT counted (final = N − fibre − fruit/veg/legumes points). Bands: A ≤0, B 1–2, C 3–10, D 11–18, E ≥19.'
+               : 'N < 11: final score = N − P (all positive points counted). Bands: A ≤0, B 1–2, C 3–10, D 11–18, E ≥19.';
+  return { N:N, P:P, proteinPts:fPr, rawProteinPts:rawPr, fibrePts:fFi, fvlPts:fFv, proteinCounted:proteinCounted, score:score, grade:grade, rows:rows, rule:rule };
+}
+
+/* ---------- Health Star Rating tables ---------- */
+var HSR_ENERGY = [335,670,1005,1340,1675,2010,2345,2680,3015,3350,3685];
+var HSR_SATFAT_A = [1,2,3,4,5,6,7,8,9,10,11.2,12.5,13.9,15.5,17.3,19.3,21.6,24.1,26.9,30,33.5,37.4,41.7,46.6,52,58,64.7,72.3,80.6,90];
+var HSR_SATFAT_B = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30];
+var HSR_SUGARS_A = [5,9,13.5,18,22.5,27,31,36,40,45,49,54,58,63,67,72,76,81,85,90,94,99];
+var HSR_SUGARS_B = [5,9,13.5,18,22.5,27,31,36,40,45];
+var HSR_SODIUM_A = [90,180,270,360,450,540,630,720,810,900,1005,1121,1251,1397,1559,1740,1942,2168,2420,2701,3015,3365,3756,4192,4679,5223,5829,6506,7262,8106];
+var HSR_SODIUM_B = [90,180,270,360,450,540,630,720,810,900,990,1080,1170,1260,1350,1440,1530,1620,1710,1800,1890,1980,2070,2160,2250,2340,2430,2520,2610,2700];
+var HSR_PROTEIN = [1.6,3.2,4.8,6.4,8,9.6,11.6,13.9,16.7,20,24,28.9,34.7,41.6,50];
+var HSR_FIBRE = [0.9,1.9,2.8,3.7,4.7,5.4,6.3,7.3,8.4,9.7,11.2,13,15,17.3,20];
+function hsrVPoints(pct, concentrated){
+  if (pct >= 99.5) return 8;
+  if (concentrated){
+    if (pct>=90) return 7; if (pct>=80) return 6; if (pct>=67) return 5; if (pct>=63) return 4;
+    if (pct>=52) return 3; if (pct>=43) return 2; if (pct>=25) return 1; return 0;
+  }
+  if (pct>95) return 7; if (pct>90) return 6; if (pct>80) return 5; if (pct>75) return 4;
+  if (pct>67) return 3; if (pct>60) return 2; if (pct>40) return 1; return 0;
+}
+function hsrStarsFor(cat, s){
+  function r(lo,hi){ return s>=lo && s<=hi; }
+  switch(cat){
+    case '1':  return s<=-6?5:(s===-5?4.5:(s===-4?4:(s===-3?3.5:(s===-2?3:(s===-1?2.5:(s===0?2:(s===1?1.5:(s===2?1:0.5))))))));
+    case '1D': case '2D': return s<=-2?5:(s===-1?4.5:(s===0?4:(s===1?3.5:(s===2?3:(s===3?2.5:(s===4?2:(s===5?1.5:(s===6?1:0.5))))))));
+    case '2':  return s<=-11?5:(r(-10,-7)?4.5:(r(-6,-2)?4:(r(-1,2)?3.5:(r(3,6)?3:(r(7,11)?2.5:(r(12,15)?2:(r(16,20)?1.5:(r(21,24)?1:0.5))))))));
+    case '3':  return s<=13?5:(r(14,16)?4.5:(r(17,20)?4:(r(21,23)?3.5:(r(24,27)?3:(r(28,30)?2.5:(r(31,34)?2:(r(35,37)?1.5:(r(38,41)?1:0.5))))))));
+    case '3D': return s<=22?5:(r(23,24)?4.5:(r(25,26)?4:(r(27,28)?3.5:(r(29,30)?3:(r(31,32)?2.5:(r(33,34)?2:(r(35,36)?1.5:(r(37,38)?1:0.5))))))));
+  }
+  return 0;
+}
+var HSR_CAT_LABEL = { '1':'Category 1 — non-dairy beverages', '1D':'Category 1D — dairy beverages', '2':'Category 2 — general foods', '2D':'Category 2D — dairy foods', '3':'Category 3 — oils & spreads', '3D':'Category 3D — cheese (>320 mg Ca/100 g)' };
+
+function healthStars(p){
+  var cat = p.hsrCategory || '2';
+  var tableB = (cat==='3' || cat==='3D');
+  var eE = ptsAbove(p.energyKj, HSR_ENERGY);
+  var eF = ptsAbove(p.satfat, tableB?HSR_SATFAT_B:HSR_SATFAT_A);
+  var eS = ptsAbove(p.sugars, tableB?HSR_SUGARS_B:HSR_SUGARS_A);
+  var eNa = ptsAbove(p.sodiumMg, tableB?HSR_SODIUM_B:HSR_SODIUM_A);
+  var baseline = eE+eF+eS+eNa;
+  var v = hsrVPoints(p.fvn||0, !!p.fvnConcentrated);
+  var pRaw = ptsAbove(p.protein, HSR_PROTEIN);
+  var proteinCounts = (baseline < 13) || (v >= 5);
+  var pPts = proteinCounts ? pRaw : 0;
+  var fibreApplies = !(cat==='1' || cat==='1D');
+  var fPts = fibreApplies ? ptsAbove(p.fibre, HSR_FIBRE) : 0;
+  var score = baseline - v - pPts - fPts;
+  var stars = hsrStarsFor(cat, score);
+  var rows = [
+    ['Energy (baseline)', fmt(p.energyKj,0)+' kJ', eE], ['Saturated fat (baseline)', fmt(p.satfat,2)+' g', eF],
+    ['Total sugars (baseline)', fmt(p.sugars,2)+' g', eS], ['Sodium (baseline)', fmt(p.sodiumMg,0)+' mg', eNa],
+    ['FVNL — V points', fmt(p.fvn||0,0)+' %'+(p.fvnConcentrated?' (concentrated)':''), v],
+    ['Protein — P points', fmt(p.protein,2)+' g', pPts], ['Fibre — F points', fmt(p.fibre,2)+' g', fPts]
+  ];
+  var rule = 'Baseline '+baseline+'; protein '+(proteinCounts?'counted':'NOT counted (baseline ≥13 and V points <5)')+
+    '; fibre '+(fibreApplies?'counted':'not applicable to beverage categories 1/1D')+
+    '. Final = baseline − V − P − F = '+score+' → '+stars+' stars in '+HSR_CAT_LABEL[cat]+'.';
+  return { baseline:baseline, V:v, P:pPts, rawP:pRaw, proteinCounted:proteinCounts, F:fPts, score:score, stars:stars, rows:rows, rule:rule, category:cat };
+}
+
+/* ---------- Codex claim engine (CAC/GL 23-1997; EU variation Reg. (EC) 1924/2006) ---------- */
+function evaluateClaims(p, jurisdiction){
+  var bev = (p.form === 'beverage');
+  var unit = bev ? '100 ml' : '100 g';
+  var kcal = p.energyKcal || 0;
+  var out = [];
+  function add(id, label, status, valueTxt, needTxt, note){
+    out.push({ id:id, label:label, status:status, value:valueTxt, need:needTxt, note:note||'' });
+  }
+  function simple(id, label, value, limit, unitTxt){
+    var pass = value <= limit + 1e-9;
+    add(id, label, pass?'pass':'fail', fmt(value,2)+' '+unitTxt, '≤ '+fmt(limit,2)+' '+unitTxt+' per '+unit,
+        pass?'':'needs to fall by '+fmt(value-limit,2)+' '+unitTxt);
+  }
+  /* Energy */
+  simple('low-energy','Low energy', kcal, bev?20:40, 'kcal');
+  if (bev) simple('energy-free','Energy-free', kcal, 4, 'kcal');
+  else add('energy-free','Energy-free','na','—','Codex sets this claim per 100 ml (liquids)','not applicable to solids in this tool');
+  /* Fat */
+  simple('low-fat','Low fat', p.fat, bev?1.5:3, 'g');
+  simple('fat-free','Fat-free', p.fat, 0.5, 'g');
+  var satPct = kcal>0 ? (p.satfat*9/kcal*100) : (p.satfat>0? Infinity : 0);
+  var satLim = bev?0.75:1.5;
+  var satPass = (p.satfat <= satLim+1e-9) && (satPct <= 10+1e-9);
+  add('low-sat-fat','Low saturated fat', satPass?'pass':'fail',
+      fmt(p.satfat,2)+' g and '+fmt(satPct,1)+'% of energy from saturated fat',
+      '≤ '+fmt(satLim,2)+' g per '+unit+' AND saturated-fat energy ≤ 10% of total energy',
+      satPass?'':(p.satfat>satLim?'saturated fat too high':'the 10%-of-energy sub-rule fails'));
+  simple('sat-fat-free','Saturated-fat-free', p.satfat, 0.1, 'g');
+  /* Sugars */
+  simple('low-sugars','Low sugars', p.sugars, bev?2.5:5, 'g');
+  simple('sugars-free','Sugars-free', p.sugars, 0.5, 'g');
+  add('no-added-sugars','No added sugars', p.addedSugars?'fail':'pass',
+      p.addedSugars?'added sugars present':'no added sugars declared',
+      'no added mono-/disaccharides or other food used for its sweetening properties',
+      (!p.addedSugars && p.sugars>0) ? 'pack must also state “contains naturally occurring sugars”' : '');
+  /* Sodium */
+  simple('low-sodium','Low sodium', p.sodiumMg, 120, 'mg');
+  simple('very-low-sodium','Very low sodium', p.sodiumMg, 40, 'mg');
+  simple('sodium-free','Sodium-free', p.sodiumMg, 5, 'mg');
+  /* Protein */
+  var per100kcalProtein = kcal>0 ? p.protein/kcal*100 : (p.protein>0? Infinity : 0);
+  var protEnergyPct = kcal>0 ? p.protein*4/kcal*100 : 0;
+  if (jurisdiction === 'eu'){
+    add('source-protein','Source of protein (EU basis)', protEnergyPct>=12-1e-9?'pass':'fail',
+        fmt(protEnergyPct,1)+'% of energy from protein', 'protein ≥ 12% of energy (Reg. (EC) 1924/2006)',
+        'EU variation — replaces the Codex per-100 g / per-100 kcal routes');
+    add('high-protein','High protein (EU basis)', protEnergyPct>=20-1e-9?'pass':'fail',
+        fmt(protEnergyPct,1)+'% of energy from protein', 'protein ≥ 20% of energy (Reg. (EC) 1924/2006)',
+        'EU variation — replaces the Codex per-100 g / per-100 kcal routes');
+  } else {
+    var srcLim = bev?2.5:5, highLim = bev?5:10;
+    var srcRoute = (p.protein>=srcLim-1e-9) ? ('per '+unit+' route') : ((per100kcalProtein>=2.5-1e-9) ? 'per 100 kcal route' : '');
+    add('source-protein','Source of protein', srcRoute?'pass':'fail',
+        fmt(p.protein,2)+' g per '+unit+'; '+fmt(per100kcalProtein,2)+' g per 100 kcal',
+        '≥ '+fmt(srcLim,1)+' g per '+unit+' (10% NRV) OR ≥ 2.5 g per 100 kcal (5% NRV)',
+        srcRoute?('met via '+srcRoute):'neither route met');
+    var highRoute = (p.protein>=highLim-1e-9) ? ('per '+unit+' route') : ((per100kcalProtein>=5-1e-9) ? 'per 100 kcal route' : '');
+    add('high-protein','High protein', highRoute?'pass':'fail',
+        fmt(p.protein,2)+' g per '+unit+'; '+fmt(per100kcalProtein,2)+' g per 100 kcal',
+        '≥ '+fmt(highLim,1)+' g per '+unit+' (20% NRV) OR ≥ 5 g per 100 kcal (10% NRV)',
+        highRoute?('met via '+highRoute):'neither route met');
+  }
+  /* Fibre */
+  var per100kcalFibre = kcal>0 ? p.fibre/kcal*100 : (p.fibre>0? Infinity : 0);
+  function fibreClaim(id, label, wLim, mlLim, kLim){
+    var routes = [];
+    if (!bev && p.fibre>=wLim-1e-9) routes.push('per 100 g route');
+    if (bev && p.fibre>=mlLim-1e-9) routes.push('per 100 ml route');
+    if (per100kcalFibre>=kLim-1e-9) routes.push('per 100 kcal route');
+    add(id, label, routes.length?'pass':'fail',
+        fmt(p.fibre,2)+' g per '+unit+'; '+fmt(per100kcalFibre,2)+' g per 100 kcal',
+        (bev?('≥ '+fmt(mlLim,1)+' g per 100 ml'):('≥ '+fmt(wLim,1)+' g per 100 g'))+' OR ≥ '+fmt(kLim,1)+' g per 100 kcal',
+        routes.length?('met via '+routes.join(' + ')):'no route met');
+  }
+  fibreClaim('source-fibre','Source of fibre', 3, 1.5, 1.5);
+  fibreClaim('high-fibre','High fibre', 6, 3, 3);
+  /* Vitamins & minerals (NRV routes per 100 g / 100 ml) */
+  function micro(id, label, value, unitTxt, nrv){
+    var srcLim = nrv*(bev?0.075:0.15), highLim = nrv*(bev?0.15:0.30);
+    add('source-'+id, 'Source of '+label, value>=srcLim-1e-9?'pass':'fail',
+        fmt(value,3)+' '+unitTxt+' per '+unit, '≥ '+fmt(srcLim,3)+' '+unitTxt+' per '+unit+' ('+(bev?'7.5':'15')+'% of NRV '+fmt(nrv,0)+' '+unitTxt+')',
+        value>=srcLim-1e-9?'':'needs ' + fmt(srcLim-value,3) + ' ' + unitTxt + ' more');
+    add('high-'+id, 'High '+label, value>=highLim-1e-9?'pass':'fail',
+        fmt(value,3)+' '+unitTxt+' per '+unit, '≥ '+fmt(highLim,3)+' '+unitTxt+' per '+unit+' ('+(bev?'15':'30')+'% NRV)',
+        value>=highLim-1e-9?'':'needs ' + fmt(highLim-value,3) + ' ' + unitTxt + ' more');
+  }
+  micro('calcium','calcium', p.calcium||0, 'mg', NRV.calcium);
+  micro('iron','iron', p.iron||0, 'mg', NRV.iron);
+  micro('vitc','vitamin C', p.vitC||0, 'mg', NRV.vitC);
+  micro('vitd','vitamin D', p.vitD||0, 'µg', NRV.vitD);
+  /* Caution flags (NOT Codex disqualifications) */
+  var passCount = 0; out.forEach(function(c){ if (c.status==='pass') passCount++; });
+  var flags = [];
+  if (passCount>0){
+    if (p.sodiumMg>=500) flags.push('sodium is '+fmt(p.sodiumMg,0)+' mg per '+unit+' (≥500)');
+    if (!bev && p.sugars>=15) flags.push('sugars are '+fmt(p.sugars,1)+' g per 100 g (≥15)');
+    if (p.satfat>=5) flags.push('saturated fat is '+fmt(p.satfat,1)+' g per '+unit+' (≥5)');
+    if (kcal>=400) flags.push('energy is '+fmt(kcal,0)+' kcal per '+unit+' (≥400)');
+  }
+  return { claims: out, passCount: passCount, flags: flags };
+}
+
+/* ---------- Batch CSV parser ---------- */
+var BATCH_COLS = ['name','form','energy_kcal','protein','fibre','sugars','fat','satfat','sodium_mg','fvn_pct','calcium','iron','vitc','vitd'];
+function normKey(s){ return (''+s).toLowerCase().replace(/[\s\-]+/g,'_').replace(/[^a-z0-9_]/g,''); }
+function splitLine(line){
+  var delim = line.indexOf(';')>=0 ? ';' : (line.indexOf('\t')>=0 ? '\t' : ',');
+  return line.split(delim).map(function(x){ return x.trim().replace(/^"|"$/g,''); });
+}
+function parseBatchCSV(text){
+  var lines = (''+text).split(/\r?\n/); var products = [], errors = [];
+  var colMap = null, firstData = 0;
+  for (var i=0;i<lines.length;i++){
+    if (lines[i].trim()===''){ continue; }
+    var cells = splitLine(lines[i]);
+    var keys = cells.map(normKey);
+    var isHeader = keys.indexOf('name')>=0 || keys.indexOf('energy_kcal')>=0 || keys.indexOf('protein')>=0;
+    if (isHeader && colMap===null){
+      colMap = {};
+      keys.forEach(function(k, idx){ if (BATCH_COLS.indexOf(k)>=0) colMap[k]=idx; });
+      if (colMap.name===undefined) colMap.name = 0;
+      if (colMap.energy_kcal===undefined && keys.indexOf('energy')>=0) colMap.energy_kcal = keys.indexOf('energy');
+      firstData = i+1; break;
+    }
+    break;
+  }
+  var start = (colMap!==null) ? firstData : 0;
+  if (colMap===null){ colMap = {}; BATCH_COLS.forEach(function(k, idx){ colMap[k]=idx; }); }
+  for (var j=start;j<lines.length;j++){
+    var raw = lines[j]; if (raw.trim()==='') continue;
+    var c = splitLine(raw); var lineNo = j+1;
+    function cell(k){ var ix = colMap[k]; return (ix===undefined || ix>=c.length) ? '' : c[ix]; }
+    function num(k){ var v = cell(k); if (v===''||v===undefined) return 0; var n = parseFloat((''+v).replace(',','.')); return isNaN(n)? null : n; }
+    var name = cell('name') || ('Product '+(products.length+1));
+    var formRaw = (cell('form')||'solid').toLowerCase();
+    var form = (formRaw.indexOf('bev')>=0 || formRaw.indexOf('drink')>=0 || formRaw.indexOf('liquid')>=0) ? 'beverage' : 'solid';
+    var kcal = num('energy_kcal'), protein = num('protein'), fibre = num('fibre'), sugars = num('sugars'),
+        fat = num('fat'), satfat = num('satfat'), sodium = num('sodium_mg'), fvn = num('fvn_pct');
+    if ([kcal,protein,fibre,sugars,fat,satfat,sodium,fvn].indexOf(null)>=0){
+      errors.push('Line '+lineNo+': non-numeric value in a nutrient column — row skipped.');
+      continue;
+    }
+    products.push({
+      name: name, form: form, serving: 0, fvn: Math.min(100, Math.max(0, fvn)), fvnConcentrated: false,
+      redMeat: false, addedSugars: false, sweeteners: false, water: false, hsrCategory: form==='beverage'?'1':'2',
+      energyKcal: kcal, energyKj: kcal*KJ_PER_KCAL, protein: protein, fibre: fibre, sugars: sugars,
+      fat: fat, satfat: satfat, sodiumMg: sodium, saltG: sodiumMgFromSaltG(0)+saltGFromSodiumMg(sodium),
+      calcium: num('calcium')||0, iron: num('iron')||0, vitC: num('vitc')||0, vitD: num('vitd')||0
+    });
+  }
+  return { products: products, errors: errors };
+}
+
+function evaluateAll(p, jurisdiction){
+  return { claims: evaluateClaims(p, jurisdiction||'codex'), nutri: nutriScore(p), hsr: healthStars(p) };
+}
+/*PURE-CORE-END*/
+</script>
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var form = 'solid';
+  var lastBatch = [];
+
+  function num(id){ var v = parseFloat($(id).value); return isNaN(v) ? 0 : v; }
+  function setIf(id, v){ $(id).value = (Math.round(v*1000)/1000); }
+
+  $('nKcal').addEventListener('input', function(){ setIf('nKj', num('nKcal')*4.184); render(); });
+  $('nKj').addEventListener('input', function(){ setIf('nKcal', num('nKj')/4.184); render(); });
+  $('nSodium').addEventListener('input', function(){ setIf('nSalt', num('nSodium')/400); render(); });
+  $('nSalt').addEventListener('input', function(){ setIf('nSodium', num('nSalt')*400); render(); });
+
+  $('pFormSeg').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    form = b.getAttribute('data-form');
+    var btns = $('pFormSeg').querySelectorAll('button');
+    for (var i=0;i<btns.length;i++) btns[i].classList.toggle('on', btns[i]===b);
+    $('pHsrCat').value = (form==='beverage') ? '1' : '2';
+    render();
+  });
+
+  ['pName','pServing','pFvn','nProtein','nFibre','nSugars','nFat','nSatfat','nCalcium','nIron','nVitC','nVitD']
+    .forEach(function(id){ $(id).addEventListener('input', render); });
+  ['pJurisdiction','pHsrCat'].forEach(function(id){ $(id).addEventListener('change', render); });
+  ['pFvnConc','pRedMeat','pAddedSugars','pSweeteners','pWater'].forEach(function(id){ $(id).addEventListener('change', render); });
+
+  function readProfile(){
+    return {
+      name: $('pName').value.trim() || 'Unnamed product', form: form,
+      serving: num('pServing'), fvn: num('pFvn'), fvnConcentrated: $('pFvnConc').checked,
+      redMeat: $('pRedMeat').checked, addedSugars: $('pAddedSugars').checked,
+      sweeteners: $('pSweeteners').checked, water: $('pWater').checked,
+      hsrCategory: $('pHsrCat').value,
+      energyKcal: num('nKcal'), energyKj: num('nKj'),
+      protein: num('nProtein'), fibre: num('nFibre'), sugars: num('nSugars'),
+      fat: num('nFat'), satfat: num('nSatfat'),
+      sodiumMg: num('nSodium'), saltG: num('nSalt'),
+      calcium: num('nCalcium'), iron: num('nIron'), vitC: num('nVitC'), vitD: num('nVitD')
+    };
+  }
+  function validate(p){
+    var errs = [];
+    ['protein','fibre','sugars','fat','satfat'].forEach(function(k){ if (p[k]<0 || p[k]>100) errs.push(k+' must be between 0 and 100 g'); });
+    ['energyKcal','sodiumMg','calcium','iron','vitC','vitD'].forEach(function(k){ if (p[k]<0) errs.push(k+' cannot be negative'); });
+    if (p.fvn<0 || p.fvn>100) errs.push('FVNL % must be between 0 and 100');
+    if (p.satfat > p.fat + 1e-9) errs.push('Note: saturated fat ('+p.satfat+' g) exceeds total fat ('+p.fat+' g)');
+    return errs;
+  }
+  function starsText(stars){
+    var full = Math.floor(stars), half = (stars - full) >= 0.5;
+    var s = ''; for (var i=0;i<full;i++) s += '★';
+    if (half) s += '⯨';
+    while (s.replace(/⯨/,'*').length < 5) s += '☆';
+    return s;
+  }
+  function breakTable(rows, posFrom){
+    var h = '<table><tr><th>Component</th><th>Value</th><th class="num">Points</th></tr>';
+    rows.forEach(function(r, i){
+      var sign = (i < posFrom) ? '' : '−';
+      h += '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td class="num">'+sign+r[2]+'</td></tr>';
+    });
+    return h+'</table>';
+  }
+  function render(){
+    var p = readProfile();
+    var errs = validate(p);
+    var box = $('formErr');
+    if (errs.length){ box.style.display='block'; box.textContent = errs.join(' · '); } else box.style.display='none';
+    var res = evaluateAll(p, $('pJurisdiction').value);
+    /* Nutri-Score */
+    var letters = ['A','B','C','D','E'], colors = {A:'var(--chipA)',B:'var(--chipB)',C:'var(--chipC)',D:'var(--chipD)',E:'var(--chipE)'};
+    var h = '';
+    letters.forEach(function(L){
+      var txt = (L==='C') ? '#3a2f00' : '#fff';
+      h += '<div class="nschip'+(res.nutri.grade===L?' sel':'')+'" style="background:'+colors[L]+';color:'+txt+'">'+L+'</div>';
+    });
+    $('nsRow').innerHTML = h;
+    $('nsScore').textContent = 'Grade '+res.nutri.grade+' · final score '+res.nutri.score+' (N '+res.nutri.N+' − P '+res.nutri.P+')';
+    $('nsBreak').innerHTML = breakTable(res.nutri.rows, 0) + '<p class="note">'+res.nutri.rule+'</p>';
+    /* HSR */
+    $('hsrStars').textContent = starsText(res.hsr.stars);
+    $('hsrScore').textContent = res.hsr.stars+' stars · final score '+res.hsr.score+' (baseline '+res.hsr.baseline+')';
+    $('hsrBreak').innerHTML = breakTable(res.hsr.rows, 4) + '<p class="note">'+res.hsr.rule+'</p>';
+    /* Claims */
+    $('claimBasis').textContent = '— basis: ' + ($('pJurisdiction').value==='eu' ? 'Codex GL 23-1997 + EU protein variation' : 'Codex GL 23-1997') + ', per ' + (form==='beverage'?'100 ml':'100 g');
+    var passH = '', failH = '';
+    res.claims.claims.forEach(function(c){
+      var pill = c.status==='pass' ? '<span class="pill p">PASS</span>' : (c.status==='na' ? '<span class="pill n">n/a</span>' : '<span class="pill f">FAIL</span>');
+      var line = '<div class="claim">'+pill+' <b>'+c.label+'</b><div class="why">Value: '+c.value+' · Needed: '+c.need+(c.note?' · '+c.note:'')+'</div></div>';
+      if (c.status==='pass') passH += line; else failH += line;
+    });
+    $('claimsPass').innerHTML = passH || '<p class="note">No claims pass for this profile.</p>';
+    $('claimsFail').innerHTML = failH || '<p class="note">—</p>';
+    $('passCount').textContent = res.claims.passCount;
+    $('failCount').textContent = res.claims.claims.length - res.claims.passCount;
+    var ch = '';
+    res.claims.flags.forEach(function(f){
+      ch += '<div class="flag">⚠ <b>Caution:</b> '+f+'. Many markets restrict claims on products high in these nutrients — these flags are cautions, not Codex disqualifications; check local rules.</div>';
+    });
+    $('cautions').innerHTML = ch;
+    window.__lastEval = { profile: p, result: res };
+  }
+  function loadProfile(p){
+    $('pName').value = p.name; form = p.form;
+    var btns = $('pFormSeg').querySelectorAll('button');
+    for (var i=0;i<btns.length;i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-form')===form);
+    $('pServing').value = p.serving || ''; $('pFvn').value = p.fvn;
+    $('pFvnConc').checked = !!p.fvnConcentrated; $('pRedMeat').checked = !!p.redMeat;
+    $('pAddedSugars').checked = !!p.addedSugars; $('pSweeteners').checked = !!p.sweeteners; $('pWater').checked = !!p.water;
+    $('pHsrCat').value = p.hsrCategory || (form==='beverage'?'1':'2');
+    $('nKcal').value = p.energyKcal; $('nKj').value = Math.round(p.energyKj*10)/10;
+    $('nProtein').value = p.protein; $('nFibre').value = p.fibre; $('nSugars').value = p.sugars;
+    $('nFat').value = p.fat; $('nSatfat').value = p.satfat; $('nSodium').value = p.sodiumMg;
+    $('nSalt').value = Math.round(p.sodiumMg/400*1000)/1000;
+    $('nCalcium').value = p.calcium; $('nIron').value = p.iron; $('nVitC').value = p.vitC; $('nVitD').value = p.vitD;
+    render();
+  }
+  $('batchRun').addEventListener('click', function(){
+    var r = parseBatchCSV($('batchText').value);
+    var be = $('batchErr');
+    if (r.errors.length){ be.style.display='block'; be.textContent = r.errors.join(' '); } else be.style.display='none';
+    if (!r.products.length){ $('batchOut').innerHTML = '<p class="note">No valid product rows found.</p>'; lastBatch = []; return; }
+    var jur = $('pJurisdiction').value;
+    var h = '<table><tr><th>Product</th><th class="num">Claims passed</th><th>Nutri-Score</th><th class="num">HSR stars</th></tr>';
+    lastBatch = r.products.map(function(pr){ return { p: pr, r: evaluateAll(pr, jur) }; });
+    lastBatch.forEach(function(item, idx){
+      h += '<tr class="batchres" data-idx="'+idx+'"><td>'+item.p.name.replace(/</g,'&lt;')+'</td><td class="num">'+item.r.claims.passCount+' / '+item.r.claims.claims.length+'</td><td>'+item.r.nutri.grade+' ('+item.r.nutri.score+')</td><td class="num">'+item.r.hsr.stars+' ★</td></tr>';
+    });
+    $('batchOut').innerHTML = h + '</table><p class="note">HSR category defaults: beverages → 1, solids → 2. Click a row to load it into the form.</p>';
+    var rowsEls = $('batchOut').querySelectorAll('.batchres');
+    rowsEls.forEach(function(el){ el.addEventListener('click', function(){ loadProfile(lastBatch[+el.getAttribute('data-idx')].p); window.scrollTo({top:0, behavior:'smooth'}); }); });
+  });
+  $('batchClear').addEventListener('click', function(){ $('batchText').value=''; $('batchOut').innerHTML=''; $('batchErr').style.display='none'; });
+  $('batchFile').addEventListener('change', function(){
+    var f = $('batchFile').files[0]; if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function(){ $('batchText').value = rd.result; $('batchRun').click(); };
+    rd.readAsText(f);
+  });
+  function summaryText(){
+    var d = window.__lastEval, p = d.profile, r = d.result;
+    var lines = [];
+    lines.push('Front-of-Pack evaluation — '+p.name);
+    lines.push('Form: '+(p.form==='beverage'?'Beverage (per 100 ml)':'Solid food (per 100 g)')+(p.serving?' · Serving: '+p.serving+(p.form==='beverage'?' ml':' g'):''));
+    lines.push('Nutri-Score 2023: '+r.nutri.grade+' (score '+r.nutri.score+', N '+r.nutri.N+' − P '+r.nutri.P+')');
+    lines.push('Health Star Rating: '+r.hsr.stars+' stars (final score '+r.hsr.score+', '+HSR_CAT_LABEL[r.hsr.category]+')');
+    lines.push('Claims passed ('+r.claims.passCount+'): '+r.claims.claims.filter(function(c){return c.status==='pass';}).map(function(c){return c.label;}).join('; '));
+    if (r.claims.flags.length) lines.push('Cautions: '+r.claims.flags.join('; '));
+    lines.push('Guidance only — Codex GL 23-1997 / Nutri-Score 2023 / HSR calculator tables; final claim legality needs regulatory review.');
+    return lines.join('\n');
+  }
+  $('copyBtn').addEventListener('click', function(){
+    var t = summaryText();
+    function done(){ $('copyMsg').textContent = 'Summary copied.'; }
+    if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done, function(){ fallback(); }); } else fallback();
+    function fallback(){
+      var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta);
+      ta.select(); try { document.execCommand('copy'); done(); } catch(e){ $('copyMsg').textContent = 'Copy failed — select the summary manually.'; }
+      document.body.removeChild(ta);
+    }
+  });
+  $('csvBtn').addEventListener('click', function(){
+    var d = window.__lastEval, p = d.profile, r = d.result;
+    var rows = [['section','item','status_or_points','value','requirement_or_note']];
+    rows.push(['product','name','',p.name,'']);
+    rows.push(['rating','Nutri-Score 2023', r.nutri.grade, 'score '+r.nutri.score, 'N '+r.nutri.N+' - P '+r.nutri.P]);
+    rows.push(['rating','Health Star Rating', r.hsr.stars+' stars', 'final score '+r.hsr.score, HSR_CAT_LABEL[r.hsr.category]]);
+    r.claims.claims.forEach(function(c){ rows.push(['claim', c.label, c.status, c.value, c.need+(c.note?' | '+c.note:'')]); });
+    r.claims.flags.forEach(function(f){ rows.push(['caution','flag','caution', f, 'many markets restrict claims on products high in these; check local rules']); });
+    var csv = rows.map(function(row){ return row.map(function(x){ return '"'+(''+x).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+    var blob = new Blob([csv], { type:'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (p.name||'fop-evaluation').replace(/[^a-z0-9\-]+/gi,'-').toLowerCase()+'-fop-evaluation.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  });
+  render();
+})();
+</script>
+</body>
+</html>
